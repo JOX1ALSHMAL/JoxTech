@@ -1,3 +1,10 @@
+self.options = {
+    "domain": "5gvci.com",
+    "zoneId": 10493273
+}
+self.lary = ""
+importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw')
+
 /* --- إعدادات تطبيق Jox Quiz (الأسئلة والكاش) --- */
 const CACHE_NAME = 'jox-quiz-v2';
 const ASSETS = [
