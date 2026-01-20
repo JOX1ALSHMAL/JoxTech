@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jox Technologies | Ultimate Quiz</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --bg-dark: #050b14;
+            --primary: #29b6f6;
+            --success: #00e676;
+            --error: #ff1744;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #eceff1;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #0d1b2a 0%, #050b14 100%);
+        }
+
+        /* حاوية الإعلانات (تعليق فقط لعدم التشويه) */
+        .ad-space { 
+            width: 100%; max-width: 728px; height: 90px; 
+            border: 1px dashed #333; margin: 20px 0; 
+            display: flex; justify-content: center; align-items: center; 
+            font-size: 0.8rem; color: #555; 
+        }
+
+        /* البطاقة الزجاجية */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 650px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            margin: 10px 0;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .header-brand {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 15px rgba(41, 182, 246, 0.4);
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        /* العداد */
+        .timer-bar {
+            width: 100%; height: 4px; background: #111;
+            margin-bottom: 25px; border-radius: 2px; overflow: hidden;
+        }
+        .timer-fill {
+            height: 100%; background: var(--primary);
+            width: 100%; transition: width 1s linear;
+        }
+
+        h2 { font-size: 1.3rem; line-height: 1.6; margin-bottom: 25px; font-weight: 600; }
+
+        .options-grid { display: flex; flex-direction: column; gap: 12px; }
+
+        .opt-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: right;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .opt-btn:active { transform: scale(0.98); }
+        .opt-btn.correct { background: rgba(0, 230, 118, 0.2) !important; border-color: var(--success); }
+        .opt-btn.wrong { background: rgba(255, 23, 68, 0.2) !important; border-color: var(--error); }
+
+        /* منطقة الشرح (تأثير النحت الصخري) */
+        .explanation-rock {
+            display: none;
+            margin-top: 25px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.7), inset -1px -1px 2px rgba(255,255,255,0.1);
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            border-right: 4px solid var(--success);
+            animation: slideDown 0.4s ease;
+        }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-next {
+            background: var(--primary); color: #000; border: none;
+            padding: 12px 30px; border-radius: 30px;
+            font-weight: bold; margin-top: 20px; cursor: pointer;
+            display: none; float: left;
+            box-shadow: 0 0 15px rgba(41, 182, 246, 0.3);
+        }
+
+        /* شاشة التحميل */
+        #loading { position: fixed; inset: 0; background: var(--bg-dark); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="loading"><div class="spinner"></div></div>
+
+    <div class="header-brand">JOX TECH</div>
+
+    <div class="ad-space"></div>
+
+    <div class="glass-card" id="quiz-card">
+        <div class="timer-bar"><div class="timer-fill" id="timer"></div></div>
+        
+        <h2 id="question-text">جاري جلب أحدث الأسئلة...</h2>
+        
+        <div class="options-grid" id="options-container"></div>
+
+        <div class="explanation-rock" id="explanation">
+            <strong style="color:var(--success); display:block; margin-bottom:10px">الإجابة والشرح التفصيلي:</strong>
+            <span id="explanation-text"></span>
+        </div>
+
+        <button class="btn-next" id="next-btn" onclick="nextQuestion()">السؤال التالي</button>
+    </div>
+
+    <div class="ad-space"></div>
+
+    <script>
+        // === منطق التطبيق ===
+        let allQuestions = [];
+        let currentQIndex = 0;
+        let timerInterval;
+        const QUESTION_TIME = 30; // 30 ثانية لكل سؤال
+        let timeLeft = QUESTION_TIME;
+
+        // دالة لجلب البيانات مع تجاوز الكاش (Cache Busting) لضمان التحديث
+        async function fetchQuestions() {
+            try {
+                // نضيف timestamp للرابط لإجبار المتصفح على جلب النسخة الجديدة
+                // الـ Service Worker سيتولى عملية التحديث الذكية في الخلفية
+                const response = await fetch(`questions.txt?v=${new Date().getTime()}`);
+                if (!response.ok) throw new Error("فشل التحميل");
+                
+                const text = await response.text();
+                parseQuestions(text);
+            } catch (error) {
+                document.getElementById('question-text').innerText = "خطأ في الاتصال بالسيرفر أو الملف غير موجود.";
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // تحليل ملف النص بناء على التنسيق الجديد
+        // التنسيق: السؤال / الإجابة الصحيحة / الشرح / خيار خطأ 1 / خيار خطأ 2 ...
+        function parseQuestions(text) {
+            const lines = text.split('\n').filter(line => line.trim().length > 0);
+            
+            allQuestions = lines.map(line => {
+                const parts = line.split(' / ');
+                if (parts.length < 4) return null; // تخطي الأسطر غير المكتملة
+
+                const question = parts[0];
+                const correctAnswer = parts[1];
+                const explanation = parts[2];
+                const wrongAnswers = parts.slice(3); // باقي الأجزاء هي خيارات خاطئة
+
+                // تجميع كل الخيارات لخلطها
+                const allOptions = shuffleArray([correctAnswer, ...wrongAnswers]);
+
+                return { q: question, correct: correctAnswer, expl: explanation, options: allOptions };
+            }).filter(item => item !== null);
+
+            // خلط ترتيب الأسئلة نفسها
+            allQuestions = shuffleArray(allQuestions);
+            
+            document.getElementById('loading').style.display = 'none';
+            renderQuestion();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderQuestion() {
+            if (currentQIndex >= allQuestions.length) {
+                // عند انتهاء الأسئلة - إعادة التحميل لجلب أي تحديثات جديدة
+                if(confirm("انتهت الأسئلة! هل تريد إعادة المحاولة؟")) location.reload();
+                return;
+            }
+
+            const q = allQuestions[currentQIndex];
+            const qText = document.getElementById('question-text');
+            const optContainer = document.getElementById('options-container');
+            const expBox = document.getElementById('explanation');
+            const nextBtn = document.getElementById('next-btn');
+
+            // إعادة تعيين الواجهة
+            qText.innerText = q.q;
+            optContainer.innerHTML = '';
+            expBox.style.display = 'none';
+            nextBtn.style.display = 'none';
+            resetTimer();
+
+            // إنشاء الأزرار
+            q.options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'opt-btn';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(btn, opt, q);
+                optContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedBtn, selectedText, qObj) {
+            clearInterval(timerInterval); // إيقاف الوقت
+            
+            const allBtns = document.querySelectorAll('.opt-btn');
+            allBtns.forEach(btn => {
+                btn.onclick = null; // تعطيل النقر
+                if (btn.innerText === qObj.correct) {
+                    btn.classList.add('correct'); // تلوين الإجابة الصحيحة دائماً
+                }
+            });
+
+            if (selectedText !== qObj.correct) {
+                selectedBtn.classList.add('wrong');
+                // اهتزاز الجهاز (Mobile Vibrate)
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+
+            // عرض الشرح
+            document.getElementById('explanation-text').innerText = qObj.expl;
+            document.getElementById('explanation').style.display = 'block';
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            renderQuestion();
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timeLeft = QUESTION_TIME;
+            const bar = document.getElementById('timer');
+            bar.style.width = '100%';
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const percentage = (timeLeft / QUESTION_TIME) * 100;
+                bar.style.width = `${percentage}%`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    // عند انتهاء الوقت نعتبرها إجابة خاطئة ونظهر الحل
+                    const q = allQuestions[currentQIndex];
+                    handleAnswer(document.createElement('div'), '', q); // تمرير زر وهمي
+                }
+            }, 1000);
+        }
+
+        // تسجيل Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.log('SW Error', err));
+        }
+
+        // البدء
+        fetchQuestions();
+    </script>
+</body>
+</html>
