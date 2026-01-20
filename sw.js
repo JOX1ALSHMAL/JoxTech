@@ -1,9 +1,16 @@
+/* --- إعدادات Monetag --- */
+self.options = {
+    "domain": "5gvci.com",
+    "zoneId": 10493273
+};
+self.lary = "";
+
+/* --- إعدادات تطبيق Jox Quiz (الأسئلة والكاش) --- */
 const CACHE_NAME = 'jox-quiz-v2';
 const ASSETS = [
     '/',
     '/index.html',
     '/manifest.json'
-    // لا نضع questions.txt هنا لأننا نريده ديناميكياً
 ];
 
 // 1. تثبيت الكاش للملفات الأساسية
@@ -33,21 +40,22 @@ self.addEventListener('fetch', event => {
         event.respondWith(
             fetch(event.request)
                 .then(networkResponse => {
-                    // تحديث الكاش بالنسخة الجديدة
                     return caches.open(CACHE_NAME).then(cache => {
                         cache.put(event.request, networkResponse.clone());
                         return networkResponse;
                     });
                 })
                 .catch(() => {
-                    // إذا فشل النت، هات من الكاش
                     return caches.match(event.request);
                 })
         );
     } else {
-        // لباقي الملفات (HTML, CSS) -> Cache First (الكاش أولاً للسرعة)
+        // لباقي الملفات (HTML, CSS) -> Cache First
         event.respondWith(
             caches.match(event.request).then(cached => cached || fetch(event.request))
         );
     }
 });
+
+/* --- استيراد ملف Monetag الخارجي لإتمام التحقق والأرباح --- */
+importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw');
